@@ -31,7 +31,7 @@ These steps document how the repo artifacts were originally created.
 ### Silence Audio File
 The `silence.wav` file was created using ffmpeg:
 ```powershell
-ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 10 silence.wav
+ffmpeg -f lavfi -i anullsrc=r=8000:cl=mono -t 600 silence.wav
 ```
 
 ### Task Scheduler Task
