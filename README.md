@@ -17,6 +17,8 @@ This script solves the problem and is meant to be run by Windows Task Scheduler 
 
 4. Enable the `Bluetooth-Policy` log (it's disabled by default) by opening the "Event Viewer" app, going to `Applications and Services Logs -> Microsoft -> Windows -> Bluetooth-Policy -> Operational`, and clicking "Enable Log" on the right-hand side.
 
+5. Change the `$target` variable in `start_silence.ps1` to match the friendly name of your Bluetooth device. You can use a partial name with wildcards if you want, e.g. "JBL" to match any device with "JBL" somewhere in its name.
+
 
 ## Troubleshooting
 - You can check the log file at `C:\bluetooth-keep-alive\bluetooth_check.log` to see the output of the script and any errors that may have occurred.
