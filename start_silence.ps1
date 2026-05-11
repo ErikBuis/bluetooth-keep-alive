@@ -1,10 +1,6 @@
-# Replace this with the friendly name of your Bluetooth device. This is simply the name that shows
-# up in the list of Bluetooth devices in Windows settings. You can use a partial name with
-# wildcards if you want, e.g. "JBL" to match any device with "JBL" somewhere in its name.
-$target = "YOUR DEVICE NAME HERE"
 $logFile = "$PSScriptRoot\bluetooth_check.log"
 $silenceFile = "$PSScriptRoot\silence.wav"
-$vlcPath = "C:\Program Files\VideoLAN\VLC\vlc.exe"
+$configFile = "$PSScriptRoot\config.ps1"
 
 # Stop on any error.
 $ErrorActionPreference = 'Stop'
@@ -24,6 +20,21 @@ function Write-Log {
         $lines | Select-Object -Last $maxLines | Set-Content -Path $logFile -Encoding utf8
     }
     Write-Host $message
+}
+
+# Load user configuration.
+if (-not (Test-Path $configFile)) {
+    Write-Log 'config.ps1 not found. Copy example_config.ps1 to config.ps1 and fill in your values.' -level 'FATAL'
+    exit 1
+}
+. $configFile
+if ([string]::IsNullOrEmpty($target)) {
+    Write-Log '$target is not set in config.ps1. See example_config.ps1 for the required variables.' -level 'FATAL'
+    exit 1
+}
+if ([string]::IsNullOrEmpty($vlcPath)) {
+    Write-Log '$vlcPath is not set in config.ps1. See example_config.ps1 for the required variables.' -level 'FATAL'
+    exit 1
 }
 
 try {
