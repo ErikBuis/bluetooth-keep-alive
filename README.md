@@ -15,7 +15,7 @@ This script solves the problem and is meant to be run by Windows Task Scheduler 
 
 3. Copy `exmaple_config.ps1` to a new file named `config.ps1` in the same folder, then open `config.ps1` and fill in your own values:
    - Set `$target` to the friendly name of your Bluetooth device as shown in Windows Settings (Bluetooth & devices). You can use a partial name if you want, e.g. `"JBL"` matches any device with `"JBL"` somewhere in its name.
-   - Set `$vlcPath` to the full path of your VLC Media Player executable (the default is already filled in; only change it if you installed VLC somewhere else).
+   - Set `$vlcPath` to the full path to your VLC Media Player executable (the default is already filled in, only change it if you installed VLC somewhere else).
 
    `config.ps1` is intentionally not tracked by git, so your personal settings will stay local.
 
