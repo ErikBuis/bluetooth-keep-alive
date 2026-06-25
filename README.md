@@ -9,19 +9,23 @@ This script solves the problem and is meant to be run by Windows Task Scheduler 
 
 
 ## Setup
-1. Clone or download this repo and place the folder at `C:\bluetooth-keep-alive`. Make sure it contains `start_silence.ps1`, `silence.wav`, and `bluetooth_keep_alive.xml`.
+1. Clone or download this repo and place the folder at `C:\CustomPrograms\bluetooth-keep-alive`. Make sure it contains `start_silence.ps1`, `silence.wav`, and `bluetooth_keep_alive.xml`.
 
-2. Install VLC Media Player at `C:\Program Files (x86)\VideoLAN\VLC\vlc.exe` (this is the default installation path). If you installed it somewhere else, update the path in `start_silence.ps1`.
+2. Install VLC Media Player.
 
-3. Open the "Task Scheduler" app, click `Action -> Import Task...`, and select `bluetooth_keep_alive.xml`. Click OK.
+3. Copy `example_config.ps1` to a new file named `config.ps1` in the same folder, then open `config.ps1` and fill in your own values:
+   - Set `$target` to the friendly name of your Bluetooth device as shown in Windows Settings (Bluetooth & devices). You can use a partial name if you want, e.g. `"JBL"` matches any device with `JBL` somewhere in its name.
+   - Set `$vlcPath` to the full path to your VLC Media Player executable (the default is already filled in, only change it if you installed VLC somewhere else).
 
-4. Enable the `Bluetooth-Policy` log (it's disabled by default) by opening the "Event Viewer" app, going to `Applications and Services Logs -> Microsoft -> Windows -> Bluetooth-Policy -> Operational`, and clicking "Enable Log" on the right-hand side.
+   `config.ps1` is intentionally not tracked by git, so your personal settings will stay local.
 
-5. Change the `$target` variable in `start_silence.ps1` to match the friendly name of your Bluetooth device. You can use a partial name with wildcards if you want, e.g. "JBL" to match any device with "JBL" somewhere in its name.
+4. Open the "Task Scheduler" app (installed by default on Windows), click `Action -> Import Task...`, and select `bluetooth_keep_alive.xml`. Click OK.
+
+5. Enable the `Bluetooth-Policy` log (it's disabled by default) by opening the "Event Viewer" app (installed by default on Windows), going to `Applications and Services Logs -> Microsoft -> Windows -> Bluetooth-Policy -> Operational`, and clicking "Enable Log" on the right-hand side.
 
 
 ## Troubleshooting
-- You can check the log file at `C:\bluetooth-keep-alive\bluetooth_check.log` to see the output of the script and any errors that may have occurred.
+- You can check the log file at `bluetooth_check.log` to see the output of the script and any errors that may have occurred.
 - If you don't see any log after having connected your Bluetooth device, it could be due to Windows having been updated: after a Windows update, the `Bluetooth-Policy` log will be disabled again even if it was previously enabled, which will cause this script to fail. To fix this, just go to the Event Viewer and enable the `Bluetooth-Policy` log again (see above).
 - If the logs seem to be correct, you can check Task Scheduler to see if VLC is running. It should only take up minimal CPU and memory.
 - If VLC is running but you still have problems where the sound cuts out, you may have to update VLC to the latest version. Open VLC and go to `Help -> Check for Updates` to update it.
@@ -54,7 +58,7 @@ The `bluetooth_keep_alive.xml` Task Scheduler task definition was created by man
      - New...
          - Action: "Start a program"
          - Program/script: `powershell.exe`
-         - Add arguments: `-ExecutionPolicy Bypass -File "C:\bluetooth-keep-alive\start_silence.ps1"`
-         - Start in: `C:\bluetooth-keep-alive`
+         - Add arguments: `-ExecutionPolicy Bypass -File "C:\CustomPrograms\bluetooth-keep-alive\start_silence.ps1"`
+         - Start in: `C:\CustomPrograms\bluetooth-keep-alive`
  - Conditions
      - Uncheck "Start the task only if the computer is on AC power"
