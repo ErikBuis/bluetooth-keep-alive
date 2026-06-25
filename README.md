@@ -22,8 +22,8 @@ This script solves the problem and is meant to be run by Windows Task Scheduler 
 
 ## Troubleshooting
 - You can check the log file at `C:\bluetooth-keep-alive\bluetooth_check.log` to see the output of the script and any errors that may have occurred.
+- If you don't see any log after having connected your Bluetooth device, it could be due to Windows having been updated: after a Windows update, the `Bluetooth-Policy` log will be disabled again even if it was previously enabled, which will cause this script to fail. To fix this, just go to the Event Viewer and enable the `Bluetooth-Policy` log again (see above).
 - If the logs seem to be correct, you can check Task Scheduler to see if VLC is running. It should only take up minimal CPU and memory.
-- Sometimes after a Windows update, the `Bluetooth-Policy` log may have been disabled again, which will cause this script to fail. If that happens, just go to the Event Viewer and enable the `Bluetooth-Policy` log again (see above).
 - If VLC is running but you still have problems where the sound cuts out, you may have to update VLC to the latest version. Open VLC and go to `Help -> Check for Updates` to update it.
 
 
