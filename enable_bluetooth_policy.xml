@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!--
+  Re-enables the Microsoft-Windows-Bluetooth-Policy/Operational log, which Windows servicing
+  resets to disabled every so often. Without that log the keep-alive task never fires.
+
+  Enabling an event channel needs administrator rights, so this task runs as SYSTEM
+  (S-1-5-18). That SID is identical on every Windows installation, so unlike a user SID it
+  stays valid when this file is imported on another machine.
+
+  Prefer running install.ps1 over importing this file by hand. It also rewrites the hardcoded
+  path below to wherever this repository actually lives.
+-->
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Author>Erik Buis</Author>
+    <URI>\Enable Bluetooth Policy</URI>
+    <Description>Re-enables the Bluetooth-Policy Operational event log after Windows updates disable it. See https://github.com/ErikBuis/bluetooth-keep-alive</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <BootTrigger>
+      <Enabled>true</Enabled>
+      <Delay>PT1M</Delay>
+    </BootTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\CustomPrograms\bluetooth-keep-alive\enable_bluetooth_policy.ps1"</Arguments>
+      <WorkingDirectory>C:\CustomPrograms\bluetooth-keep-alive</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
