@@ -2,9 +2,17 @@
 # connects. Runs as a scheduled task as USER at connection of any bluetooth device and at logon to
 # catch devices that Windows connected before anyone logged on. Requires VLC to be installed.
 
+# Address of the device that fired the event trigger, substituted by Task Scheduler from the event.
+# A logon-triggered run has no event, so the placeholder arrives here unsubstituted.
+param([string]$BthAddr)
+
 $logFile = "$PSScriptRoot\bluetooth_keep_alive.log"
 $silenceFile = "$PSScriptRoot\silence.wav"
 $configFile = "$PSScriptRoot\config.ps1"
+
+# Windows publishes the audio endpoint of a Bluetooth device roughly ten seconds after it connects,
+# so a logon-triggered run gives it a generous margin to show up.
+$endpointTimeoutSec = 60
 
 # Stop on any error.
 $ErrorActionPreference = 'Stop'
@@ -45,17 +53,45 @@ if ([string]::IsNullOrEmpty($vlcPath)) {
 try {
     Write-Log "================ Checking Bluetooth Connection ================"
 
-    # A Bluetooth audio device only exposes an audio endpoint with status OK while it is actually
-    # connected, so this holds regardless of which trigger started the task.
-    $connected = @(Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
-            Where-Object { $ep = $_; $ep.Status -eq 'OK' -and ($targets | Where-Object { $ep.FriendlyName -like "*$_*" }) })
+    if ($BthAddr -match '^\d+$') {
+        # Triggered by a connection event, which already tells us exactly which device connected.
+        $address = '{0:X12}' -f [int64]$BthAddr
+        Write-Log "Connection event for address 0x$address." -level 'DEBUG'
 
-    if ($connected.Count -eq 0) {
-        Write-Log "None of the target devices are connected: $($targets -join ', ')"
-        Write-Log "No action taken."
-        exit 1
+        $device = Get-PnpDevice -Class Bluetooth |
+            Where-Object { $_.InstanceId -like "*DEV_$address*" } |
+            Select-Object -First 1
+        if (-not $device) {
+            Write-Log "No Bluetooth device found for address 0x$address." -level 'ERROR'
+            exit 1
+        }
+
+        if (-not ($targets | Where-Object { $device.FriendlyName -like "*$_*" })) {
+            Write-Log "Connected device '$($device.FriendlyName)' is not one of: $($targets -join ', ')"
+            Write-Log "No action taken."
+            exit 1
+        }
+        Write-Log "Target device connected: '$($device.FriendlyName)'."
     }
-    Write-Log "Target device connected (endpoint: '$($connected[0].FriendlyName)')."
+    else {
+        # Triggered at logon, so there is no event to go on. A Bluetooth audio device only exposes
+        # an audio endpoint with status OK while it is actually connected, but Windows takes its
+        # time to publish one, hence the wait.
+        $started = Get-Date
+        do {
+            $connected = @(Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
+                    Where-Object { $ep = $_; $ep.Status -eq 'OK' -and ($targets | Where-Object { $ep.FriendlyName -like "*$_*" }) })
+            if ($connected.Count -gt 0) { break }
+            Start-Sleep -Seconds 1
+        } while (((Get-Date) - $started).TotalSeconds -lt $endpointTimeoutSec)
+
+        if ($connected.Count -eq 0) {
+            Write-Log "None of the target devices are connected: $($targets -join ', ')"
+            Write-Log "No action taken."
+            exit 1
+        }
+        Write-Log "Target device connected (endpoint: '$($connected[0].FriendlyName)')."
+    }
 
     # Check if our silence playback VLC instance is already running by looking for a VLC process
     # whose startup command contains the silence file path.

@@ -6,6 +6,9 @@ This script is designed to work around a common issue where Bluetooth audio devi
 <br><br>
 
 This script solves the problem by running when a Bluetooth device connects or when you log on. It checks whether your target device is connected, and if so, it starts VLC Media Player to play a silent audio file in a loop.
+<br><br>
+
+The two triggers identify the device in different ways. A connection event already names the device that connected, and Task Scheduler passes that address straight to the script, so playback starts immediately. A logon run has no such event, so the script instead asks Windows which devices are connected, which it can tell from a Bluetooth device having an audio endpoint. Windows only publishes that endpoint some ten seconds after the connection itself, so a logon run waits up to a minute for one to appear before giving up.
 
 
 ## Setup
@@ -87,6 +90,7 @@ The `bluetooth_keep_alive.xml` Task Scheduler task definition was created by man
 The exported XML was then edited by hand in the following ways:
 - The `<UserId>` element was **deleted** from `<Principal>`. Normally, Task Scheduler writes the SID of the account that created the task, which is meaningless on anyone else's machine and makes `Action -> Import Task...` fail with *"The specified account name is not valid."* With `<UserId>` absent, Windows fills in the SID of whoever imports the task instead.
 - The `<UserId>` element was **deleted** from `<LogonTrigger>` as well, for the same portability reason. Unlike `<Principal>`, Task Scheduler does *not* fill this one in on import: an absent `<UserId>` means "at any user's logon", which only an administrator may register. `install.ps1` therefore inserts the SID of the installing user before handing the XML to Task Scheduler.
+- A `<ValueQueries>` block was **added** to the event trigger. It lifts the `bthAddr` field out of the event that fired the trigger and passes it to the script as `$(bthAddr)`, which saves the script from having to guess which device connected by reading the newest entry in the event log. This cannot be configured from the Task Scheduler GUI, only in XML. On a logon-triggered run there is no event, and Task Scheduler then passes the placeholder through unsubstituted, which is what lets the script tell the two triggers apart.
 - The `encoding` attribute was **removed** from the XML declaration (`<?xml version="1.0"?>`). Task Scheduler hands the XML to MSXML as an in-memory UTF-16 string, so a file that declares `encoding="UTF-8"` is rejected with *"unable to switch the encoding"*. Without the attribute the same file works both as a UTF-8 file and as a UTF-16 file.
 - The action was **redirected through `conhost`**. Because the task runs in the logged-on user's session, launching `powershell.exe` directly flashes a console window on screen for a fraction of a second on every Bluetooth connection, and `-WindowStyle Hidden` does not prevent it (the window is created before PowerShell can hide it). Running `%SystemRoot%\System32\conhost.exe --headless powershell.exe ...` never creates a window at all. The trade-off is that `conhost` always exits with code 0, so the task's "Last Run Result" is no longer meaningful.
 
